@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Scores</title>
+    <!-- Primary Meta -->
+    <meta name="title" content="Academic Scores">
+    <meta name="description" content="A lightweight web application for managing academic scores across semesters, with automatic average calculation and Excel/CSV import/export.">
+    <meta name="keywords" content="Academic, Academic Scores">
+    <meta name="author" content="Muhammad Raffiqi">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="theme-color" content="#3b6e5e">
+
+    <!-- Open Graph / Discord / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Academic Scores">
+    <meta property="og:description" content="A lightweight web application for managing academic scores across semesters, with automatic average calculation and Excel/CSV import/export.">
+    <meta property="og:url" content="https://whois65.github.io/academic_scores/">
+    <meta property="og:site_name" content="Academic Scores">
+    <meta property="og:image" content="https://whois65.github.io/academic_scores/assets/screenshot.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Academic Scores Preview">
+
+    <!-- Mobile / Apple -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Academic Scores">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://whois65.github.io/academic_scores/">
+    <style>
+        :root {
+            --ink: #22252a;
+            --ink-soft: #6b7075;
+            --paper: #fbfaf7;
+            --line: #dcd8d0;
+            --accent: #3b6e5e;
+            --accent-soft: #e7efec;
+            --danger: #a4433a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 40px 24px 80px;
+        }
+
+        .wrap {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        h1 span {
+            color: var(--accent);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            background: white;
+            color: var(--ink);
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        button.primary:hover {
+            opacity: 0.9;
+            color: white;
+        }
+
+        #mainTab {
+            display: grid;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .row {
+            display: contents;
+        }
+
+        .cell {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--line);
+            border-right: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            min-height: 42px;
+        }
+
+        .row .cell:last-child {
+            border-right: none;
+        }
+
+        .head {
+            background: var(--accent-soft);
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .lesson-name {
+            font-weight: 600;
+        }
+
+        .score {
+            cursor: pointer;
+            font-variant-numeric: tabular-nums;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .score:hover {
+            background: var(--accent-soft);
+        }
+
+        .score input {
+            font: inherit;
+            width: 100%;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .average {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .row-actions {
+            justify-content: center;
+        }
+
+        .icon-btn {
+            border: none;
+            background: transparent;
+            color: var(--ink-soft);
+            padding: 4px 8px;
+            font-size: 0.95rem;
+            border-radius: 4px;
+        }
+
+        .icon-btn:hover {
+            color: var(--danger);
+            background: #f4e7e5;
+        }
+
+        .empty {
+            padding: 32px;
+            text-align: center;
+            color: var(--ink-soft);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <h1>Academic <span>Scores</span></h1>
+            <div class="actions">
+                <button id="importBtn">Import Excel</button>
+                <button id="exportBtn">Export Excel</button>
+                <button id="addSemesterBtn">+ Semester</button>
+                <button id="addLessonBtn" class="primary">+ Lesson</button>
+            </div>
+        </header>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+        <div id="importStatus" style="font-size:0.8rem;color:var(--ink-soft);margin-bottom:12px;display:none;"></div>
+        <div id="mainTab"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        const $ = x => document.getElementById(x);
+        const STORAGE_KEY = "academicScores";
+
+        let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+            "Mathematics": [87, 89, 93],
+            "Physics": [76, 89, 96]
+        };
+
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function semesterCount() {
+            return Object.values(data).reduce((max, l) => Math.max(max, l.length), 0);
+        }
+
+        function average(scores) {
+            const nums = scores.filter(v => v !== null && v !== undefined && v !== "" && !isNaN(v)).map(Number);
+            if (nums.length === 0) return "-";
+            return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2);
+        }
+
+        function render() {
+            const table = $("mainTab");
+            table.innerHTML = "";
+            const lessons = Object.keys(data);
+            const semesters = semesterCount();
+            const cols = 1 + Math.max(semesters, 1) + 1 + 1; // lesson + semesters + average + delete
+            table.style.gridTemplateColumns = `1.4fr repeat(${Math.max(semesters, 1)}, 0.8fr) 0.8fr 0.5fr`;
+
+            if (lessons.length === 0) {
+                table.innerHTML = `<div class="empty">No lessons yet. Add one to get started.</div>`;
+                return;
+            }
+
+            // Header row
+            const head = document.createElement("div");
+            head.className = "row";
+            head.innerHTML = `<div class="cell head">Lesson</div>`;
+            for (let i = 0; i < Math.max(semesters, 1); i++) {
+                head.innerHTML += `<div class="cell head">Sem ${i + 1}</div>`;
+            }
+            head.innerHTML += `<div class="cell head">Average</div><div class="cell head"></div>`;
+            table.appendChild(head);
+
+            // Lesson rows
+            lessons.forEach(lessonName => {
+                const scores = data[lessonName];
+                const row = document.createElement("div");
+                row.className = "row";
+
+                const nameCell = document.createElement("div");
+                nameCell.className = "cell lesson-name";
+                nameCell.textContent = lessonName;
+                row.appendChild(nameCell);
+
+                const avgCell = document.createElement("div");
+                avgCell.className = "cell average";
+
+                for (let i = 0; i < Math.max(semesters, 1); i++) {
+                    const cell = document.createElement("div");
+                    cell.className = "cell";
+                    const scoreEl = document.createElement("div");
+                    scoreEl.className = "score";
+                    const val = scores[i];
+                    scoreEl.textContent = (val === undefined || val === null || val === "") ? "-" : val;
+
+                    scoreEl.onclick = () => {
+                        const input = document.createElement("input");
+                        input.type = "number";
+                        input.value = (val === undefined || val === null) ? "" : val;
+                        cell.innerHTML = "";
+                        cell.appendChild(input);
+                        input.focus();
+                        input.select();
+
+                        const commit = () => {
+                            const newVal = input.value === "" ? "" : Number(input.value);
+                            data[lessonName][i] = newVal;
+                            save();
+                            render();
+                        };
+                        input.addEventListener("keydown", e => {
+                            if (e.key === "Enter") commit();
+                            if (e.key === "Escape") render();
+                        });
+                        input.addEventListener("blur", commit);
+                    };
+
+                    cell.appendChild(scoreEl);
+                    row.appendChild(cell);
+                }
+
+                avgCell.textContent = average(scores);
+                row.appendChild(avgCell);
+
+                const actionCell = document.createElement("div");
+                actionCell.className = "cell row-actions";
+                const delBtn = document.createElement("button");
+                delBtn.className = "icon-btn";
+                delBtn.textContent = "✕";
+                delBtn.title = `Remove ${lessonName}`;
+                delBtn.onclick = () => {
+                    delete data[lessonName];
+                    save();
+                    render();
+                };
+                actionCell.appendChild(delBtn);
+                row.appendChild(actionCell);
+
+                table.appendChild(row);
+            });
+        }
+
+        function addLesson(lessonName) {
+            if (!lessonName || data.hasOwnProperty(lessonName)) return false;
+            data[lessonName] = new Array(Math.max(semesterCount(), 1)).fill("");
+            save();
+            render();
+            return true;
+        }
+
+        function addSemester() {
+            Object.keys(data).forEach(name => data[name].push(""));
+            save();
+            render();
+        }
+
+        $("addLessonBtn").onclick = () => {
+            const name = prompt("New lesson name:");
+            if (name && name.trim()) addLesson(name.trim());
+        };
+
+        $("addSemesterBtn").onclick = addSemester;
+
+        function showStatus(msg, isError) {
+            const el = $("importStatus");
+            el.textContent = msg;
+            el.style.color = isError ? "var(--danger)" : "var(--ink-soft)";
+            el.style.display = "block";
+            clearTimeout(showStatus._t);
+            showStatus._t = setTimeout(() => { el.style.display = "none"; }, 4000);
+        }
+
+        // ---- Export to Excel ----
+        $("exportBtn").onclick = () => {
+            const semesters = Math.max(semesterCount(), 1);
+            const header = ["Lesson", ...Array.from({ length: semesters }, (_, i) => `Semester ${i + 1}`), "Average"];
+            const rows = Object.keys(data).map(lessonName => {
+                const scores = data[lessonName];
+                const padded = Array.from({ length: semesters }, (_, i) => scores[i] ?? "");
+                return [lessonName, ...padded, average(scores)];
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+            ws["!cols"] = [{ wch: 20 }, ...Array.from({ length: semesters }, () => ({ wch: 10 })), { wch: 10 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Scores");
+            XLSX.writeFile(wb, "academic-scores.xlsx");
+            showStatus("Exported academic-scores.xlsx");
+        };
+
+        // ---- Import from Excel/CSV ----
+        $("importBtn").onclick = () => $("fileInput").click();
+
+        $("fileInput").addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const wb = XLSX.read(evt.target.result, { type: "array" });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: "" });
+
+                    if (rows.length < 2) {
+                        showStatus("No data rows found in file.", true);
+                        return;
+                    }
+
+                    const header = rows[0].map(h => String(h).trim().toLowerCase());
+                    const lessonIdx = header.findIndex(h => h === "lesson" || h === "subject" || h === "course");
+                    if (lessonIdx === -1) {
+                        showStatus('Could not find a "Lesson" column in the file.', true);
+                        return;
+                    }
+                    // Semester columns: everything except lesson/average/course columns, that look numeric-ish
+                    const semesterIdxs = header
+                        .map((h, i) => ({ h, i }))
+                        .filter(({ h, i }) => i !== lessonIdx && h !== "average" && !h.includes("average"));
+
+                    if (semesterIdxs.length === 0) {
+                        showStatus("No semester score columns found.", true);
+                        return;
+                    }
+
+                    const newData = {};
+                    for (let r = 1; r < rows.length; r++) {
+                        const row = rows[r];
+                        const lessonName = String(row[lessonIdx] ?? "").trim();
+                        if (!lessonName) continue;
+                        const scores = semesterIdxs.map(({ i }) => {
+                            const v = row[i];
+                            return (v === "" || v === undefined || v === null) ? "" : Number(v);
+                        });
+                        newData[lessonName] = scores;
+                    }
+
+                    if (Object.keys(newData).length === 0) {
+                        showStatus("No valid lesson rows found.", true);
+                        return;
+                    }
+
+                    data = newData;
+                    save();
+                    render();
+                    showStatus(`Imported ${Object.keys(newData).length} lesson(s) from ${file.name}.`);
+                } catch (err) {
+                    showStatus("Failed to read file: " + err.message, true);
+                } finally {
+                    e.target.value = "";
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        render();
+    </script>
+</body>
+
+</html>
